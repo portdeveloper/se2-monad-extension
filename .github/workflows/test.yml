@@ -1,0 +1,77 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  scaffold-and-build:
+    name: scaffold + compile + typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout extension
+        uses: actions/checkout@v4
+        with:
+          path: se2-monad-extension
+
+      - name: Clone create-eth
+        run: git clone --depth 1 https://github.com/scaffold-eth/create-eth.git
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install create-eth deps + build
+        working-directory: create-eth
+        run: |
+          yarn install
+          yarn build:dev
+
+      - name: Link extension into create-eth/externalExtensions
+        run: |
+          mkdir -p create-eth/externalExtensions
+          ln -snf "$GITHUB_WORKSPACE/se2-monad-extension" \
+            create-eth/externalExtensions/se2-monad-extension
+
+      - name: Scaffold test project with --dev mode
+        run: |
+          mkdir scaffold-test
+          cd scaffold-test
+          node ../create-eth/bin/create-dapp-se2.js test-monad-app \
+            -e se2-monad-extension \
+            --dev \
+            --solidity-framework foundry \
+            --skip-install
+
+      - name: Verify generated config contains Monad
+        working-directory: scaffold-test/test-monad-app
+        run: |
+          set -e
+          grep -q '^monadTestnet = "https://testnet-rpc.monad.xyz"' packages/foundry/foundry.toml
+          grep -q 'from "./utils/monadTestnet"' packages/nextjs/scaffold.config.ts
+          grep -q 'monadTestnet' packages/nextjs/scaffold.config.ts
+          test -f packages/nextjs/utils/monadTestnet.ts
+          grep -q '10143' packages/nextjs/utils/monadTestnet.ts
+          echo "All config checks passed."
+
+      - name: yarn install in scaffolded project
+        working-directory: scaffold-test/test-monad-app
+        run: yarn install
+
+      - name: forge compile
+        working-directory: scaffold-test/test-monad-app
+        run: yarn compile
+
+      - name: TypeScript check (nextjs)
+        working-directory: scaffold-test/test-monad-app/packages/nextjs
+        run: yarn tsc --noEmit
