@@ -71,7 +71,10 @@ jobs:
 
       - name: yarn install in scaffolded project
         working-directory: scaffold-test/test-monad-app
-        run: yarn install
+        # --no-immutable: GitHub sets CI=true which auto-enables Yarn's immutable
+        # mode, but the freshly scaffolded lockfile has minor peer-dep drift
+        # against latest deps. Attendees don't hit this locally (no CI=true).
+        run: yarn install --no-immutable
 
       - name: forge compile
         working-directory: scaffold-test/test-monad-app
