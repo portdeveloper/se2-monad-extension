@@ -31,6 +31,11 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
+      - name: Configure git identity (required by create-eth)
+        run: |
+          git config --global user.name  "ci"
+          git config --global user.email "ci@example.com"
+
       - name: Install create-eth deps + build
         working-directory: create-eth
         run: |
