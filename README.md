@@ -36,11 +36,30 @@ yarn start        # frontend at http://localhost:3000
 To deploy to Monad Testnet:
 
 ```bash
-yarn deploy --network monadTestnet
+yarn monad:setup     # one-time: creates a `monad-deployer` keystore, funds it
+yarn deploy:monad    # deploys with that keystore; no password prompt
 ```
 
-(You'll need MON in your deployer account — get some from the official faucet linked in the Monad docs.)
+`monad:setup` writes a `.deployer-password` file (chmod 0600, gitignored)
+holding the keystore password (`monad`); `deploy:monad` reads it via
+`ETH_PASSWORD` so the deploy stays non-interactive. This is testnet-only —
+never reuse the `monad-deployer` keystore on mainnet.
 
 ## Workshop use
 
 This extension pairs with the [Windows setup guide](../se2-workshop-windows-setup) for hosting Scaffold-ETH 2 workshops on Windows machines via WSL2.
+
+A roomful of attendees behind one NAT will normally hit the public faucet's per-IP rate limit. `monad:setup` recognizes two env vars to work around that:
+
+| Env var | Default | Purpose |
+| --- | --- | --- |
+| `MONAD_FAUCET_URL` | `https://agents.devnads.com/v1/faucet` | Override the faucet endpoint (e.g. a workshop-only deployment). |
+| `MONAD_FAUCET_TOKEN` | _(unset)_ | Sent as `X-Workshop-Token`. The server (`agentfaucet`) is configured with `WORKSHOP_TOKENS=...`; presenting a matching token skips per-IP and per-ASN limits while keeping per-address and the daily budget cap. |
+
+Workshop attendee one-liner:
+
+```bash
+MONAD_FAUCET_TOKEN=event2026 yarn monad:setup
+```
+
+Rotate the token per event. The daily budget on the server bounds the worst-case drain even if the token leaks.
