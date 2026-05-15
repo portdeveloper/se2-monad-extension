@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "monad:setup": "node scripts-js/monad-setup.js"
+  }
+}

@@ -1,1 +1,6 @@
-{}
+{
+  "scripts": {
+    "monad:setup": "yarn workspace @se-2/foundry monad:setup",
+    "deploy:monad": "yarn deploy --network monadTestnet --keystore monad-deployer"
+  }
+}
