@@ -5,18 +5,20 @@
 // Idempotent: rerunning when the keystore already exists just re-prints the
 // info you need (address + password + commands).
 import { spawnSync } from "child_process";
-import { existsSync } from "fs";
+import { existsSync, writeFileSync, chmodSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
 const KEYSTORE_NAME = "monad-deployer";
 const KEYSTORE_PASSWORD = "monad";
+const PASSWORD_FILE = ".deployer-password";
 const FAUCET_URL = "https://agents.devnads.com/v1/faucet";
 const MONAD_TESTNET_CHAIN_ID = 10143;
 const EXPLORER_TX = "https://testnet.monadexplorer.com/tx";
 const FALLBACK_FAUCET_PAGE = "https://setup.devnads.com";
 
 const keystorePath = join(homedir(), ".foundry", "keystores", KEYSTORE_NAME);
+const passwordFilePath = join(process.cwd(), PASSWORD_FILE);
 
 function divider() {
   console.log("─".repeat(60));
@@ -118,10 +120,19 @@ async function fundFromFaucet(address) {
   console.warn(`  to fund it manually, then re-try the deploy.`);
 }
 
+function writePasswordFile() {
+  writeFileSync(passwordFilePath, KEYSTORE_PASSWORD, { encoding: "utf-8" });
+  try {
+    chmodSync(passwordFilePath, 0o600);
+  } catch {
+    // chmod isn't supported on every FS (e.g. some WSL/Windows mounts) —
+    // safe to ignore, the file is still gitignored.
+  }
+}
+
 function printDeployHint() {
   console.log(`\nDeploy your contracts to Monad Testnet with:`);
   console.log(`  yarn deploy:monad`);
-  console.log(`  (when prompted for the keystore password, enter: ${KEYSTORE_PASSWORD})`);
 }
 
 async function main() {
@@ -140,7 +151,7 @@ async function main() {
     } else {
       console.log(`  (Could not read its address with the default password.)`);
     }
-    console.log(`  Password: ${KEYSTORE_PASSWORD}`);
+    writePasswordFile();
     console.log(
       `\nIf this wallet is unfunded, paste its address into the faucet at`,
     );
@@ -151,9 +162,9 @@ async function main() {
   }
 
   const address = createKeystore();
-  console.log(`\n✓ Created keystore '${KEYSTORE_NAME}'.`);
+  writePasswordFile();
+  console.log(`\n✓ Created keystore '${KEYSTORE_NAME}' (testnet only — never reuse on mainnet).`);
   console.log(`  Address:  ${address}`);
-  console.log(`  Password: ${KEYSTORE_PASSWORD}  (testnet only — never reuse on mainnet)`);
 
   await fundFromFaucet(address);
   printDeployHint();

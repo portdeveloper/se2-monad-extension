@@ -1,6 +1,6 @@
 {
   "scripts": {
     "monad:setup": "yarn workspace @se-2/foundry monad:setup",
-    "deploy:monad": "yarn deploy --network monadTestnet --keystore monad-deployer"
+    "deploy:monad": "ETH_PASSWORD=.deployer-password yarn deploy --network monadTestnet --keystore monad-deployer"
   }
 }
