@@ -12,12 +12,10 @@ import { homedir } from "os";
 const KEYSTORE_NAME = "monad-deployer";
 const KEYSTORE_PASSWORD = "monad";
 const PASSWORD_FILE = ".deployer-password";
-// MONAD_FAUCET_URL / MONAD_FAUCET_TOKEN let a workshop facilitator point
-// attendees at a different endpoint and present a token that bypasses the
-// per-IP rate limit (everyone on the same NAT otherwise locks each other out).
+// MONAD_FAUCET_URL lets a workshop facilitator point at a different endpoint
+// (e.g. a local mock for testing). Production default is the public faucet.
 const FAUCET_URL =
   process.env.MONAD_FAUCET_URL || "https://agents.devnads.com/v1/faucet";
-const FAUCET_TOKEN = process.env.MONAD_FAUCET_TOKEN || "";
 const MONAD_TESTNET_CHAIN_ID = 10143;
 const EXPLORER_TX = "https://testnet.monadexplorer.com/tx";
 const FALLBACK_FAUCET_PAGE = "https://setup.devnads.com";
@@ -99,17 +97,10 @@ function createKeystore() {
 
 async function fundFromFaucet(address) {
   console.log(`\nRequesting MON from the faucet…`);
-  if (FAUCET_TOKEN) {
-    console.log(`  (using workshop token)`);
-  }
-  const headers = { "content-type": "application/json" };
-  if (FAUCET_TOKEN) {
-    headers["X-Workshop-Token"] = FAUCET_TOKEN;
-  }
   try {
     const res = await fetch(FAUCET_URL, {
       method: "POST",
-      headers,
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({
         chainId: MONAD_TESTNET_CHAIN_ID,
         address,
