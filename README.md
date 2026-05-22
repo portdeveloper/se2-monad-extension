@@ -1,6 +1,6 @@
 # Scaffold-ETH 2 — Monad Testnet Extension
 
-A `create-eth` extension that pre-configures a fresh Scaffold-ETH 2 (Foundry flavor) project for the **Monad Testnet** (chain ID `10143`).
+A `create-eth` extension that pre-configures a fresh Scaffold-ETH 2 (Foundry flavor) project for the **Monad Testnet** (chain ID `10143`). Built by [@portdeveloper](https://portdeveloper.github.io).
 
 ## What it adds
 
